@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>46_Billups_20250916</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: sans-serif;
+    }
+
+    #container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #sidebar {
+      width: 200px;
+      background: #f4f4f4;
+      border-right: 1px solid #ccc;
+      padding: 8px;
+      overflow-y: auto;
+      transition: width 0.3s ease;
+    }
+
+    #sidebar.closed {
+      width: 0;
+      padding: 0;
+      border: none;
+    }
+
+    #map {
+      flex-grow: 1;
+    }
+
+    #toggle-btn {
+      position: absolute;
+      top: 80px;
+      left: 200px;
+      z-index: 1001;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+      box-shadow: 0 0 3px rgba(0,0,0,0.2);
+      transition: left 0.3s ease;
+    }
+
+    #sidebar.closed ~ #toggle-btn {
+      left: 10px;
+    }
+
+    .sidebar-item {
+      cursor: pointer;
+      padding: 6px;
+      margin-bottom: 4px;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      font-size: 13px;
+    }
+
+    .sidebar-item:hover {
+      background: #e8f0fe;
+    }
+
+    .leaflet-popup-content img {
+      width: 300px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="sidebar"></div>
+    <div id="map"></div>
+    <button id="toggle-btn"><</button>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map');
+
+    L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=zvozfVXSoJcPXkNFc6gI', {
+      tileSize: 512,
+      zoomOffset: -1,
+      crossOrigin: true
+    }).addTo(map);
+
+    const clubs = [{"id":"Fagnes - Spa","address":"Chemin du Golf 1, 4900 Spa","lng":5.8784,"lat":50.50975,"imglink":"https://www.golfmedia.be/screen-images/fagnes.jpg"},{"id":"Hasselt","address":"Vissenbroekstraat 15, 3500 Hasselt","lng":5.37277,"lat":50.93777,"imglink":"https://www.golfmedia.be/screen-images/hasselt.jpg"},{"id":"Golfschool Gent","address":"Keiskantstraat 5, 9031 Gent","lng":3.6431,"lat":51.04576,"imglink":"https://www.golfmedia.be/screen-images/gentse-golfschool.jpg"},{"id":"Royal Zoute","address":"Sparrendreef 1A, 8300 Knokke-Heist","lng":3.3052324840745,"lat":51.3441241751327,"imglink":"https://www.golfmedia.be/screen-images/royal-zoute.jpg"},{"id":"Henri-Chapelle","address":"Rue Vivier 3, 4841 Welkenraedt","lng":5.93727947530942,"lat":50.6847406392557,"imglink":"https://www.golfmedia.be/screen-images/henri-chapelle.jpg"},{"id":"Ter Hille Koksijde","address":"Hof ter Hillestraat 2, 8670 Koksijde","lng":2.69702,"lat":51.11517,"imglink":"https://www.golfmedia.be/screen-images/koksijde.jpg"},{"id":"Lilse","address":"Haarlebeek 3, 2275 Lille","lng":4.83159,"lat":51.28128,"imglink":"https://www.golfmedia.be/screen-images/lilse.jpg"},{"id":"Millennium","address":"Donckstraat 30, 3583 Beringen","lng":5.15115,"lat":51.0526,"imglink":"https://www.golfmedia.be/screen-images/millennium.jpg"},{"id":"Rigenee","address":"Rue du Chatelet 62, 1495 Villers-la-Ville","lng":4.52784,"lat":50.56659,"imglink":"https://www.golfmedia.be/screen-images/rigenee.jpg"},{"id":"Steenhoven","address":"Steenovens 89, 2400 Mol","lng":5.2209,"lat":51.28781,"imglink":"https://www.golfmedia.be/screen-images/steenhoven.jpg"},{"id":"Winge","address":"Leuvensesteenweg 254, 3390 Tielt-Winge","lng":4.87142,"lat":50.90827,"imglink":"https://www.golfmedia.be/screen-images/winge.jpg"},{"id":"Witbos","address":"Witbos, 2200 Noorderwijk","lng":4.83859,"lat":51.1297,"imglink":"https://www.golfmedia.be/screen-images/witbos.jpg"},{"id":"Golfclub De Kluizen Aalst","address":"Zandberg 7, 9300 Aalst","lng":4.08345,"lat":50.935751,"imglink":"https://www.golfmedia.be/screen-images/de-kluizen-aalst.jpg"},{"id":"Hannon Sport City Knokke","address":"Sparrendreef 1A, 8300 Knokke-Heist","lng":3.30532641612729,"lat":51.3441193999112,"imglink":"https://www.golfmedia.be/screen-images/hannon-knokke.jpg"}];
+
+    const golfIcon = L.icon({
+      iconUrl: 'https://golf-media.github.io/maps/green-golf.png',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -30]
+    });
+
+    const sidebar = document.getElementById("sidebar");
+    const bounds = [];
+
+    clubs.forEach((club) => {
+      const popupHTML = '<strong>' + club.id + '</strong><br><p>' + club.address + '</p>' +
+                        (club.imglink ? '<img src="' + club.imglink + '">' : '');
+
+      const marker = L.marker([club.lat, club.lng], { icon: golfIcon }).addTo(map).bindPopup(popupHTML);
+      bounds.push([club.lat, club.lng]);
+
+      const item = document.createElement("div");
+      item.className = "sidebar-item";
+      item.textContent = club.id;
+      item.onclick = () => {
+        map.setView([club.lat, club.lng], 14);
+        marker.openPopup();
+      };
+      sidebar.appendChild(item);
+    });
+
+    if (bounds.length > 0) {
+      map.fitBounds(bounds, { padding: [30, 30] });
+    } else {
+      map.setView([50.5039, 4.4699], 8);
+    }
+
+    const toggleBtn = document.getElementById("toggle-btn");
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("closed");
+      toggleBtn.textContent = sidebar.classList.contains("closed") ? ">" : "<";
+    });
+  </script>
+</body>
+</html>
+
