@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>80_MIG Motors_20251215</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: sans-serif;
+    }
+
+    #container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #sidebar {
+      width: 200px;
+      background: #f4f4f4;
+      border-right: 1px solid #ccc;
+      padding: 8px;
+      overflow-y: auto;
+      transition: width 0.3s ease;
+    }
+
+    #sidebar.closed {
+      width: 0;
+      padding: 0;
+      border: none;
+    }
+
+    #map {
+      flex-grow: 1;
+    }
+
+    #toggle-btn {
+      position: absolute;
+      top: 80px;
+      left: 200px;
+      z-index: 1001;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+      box-shadow: 0 0 3px rgba(0,0,0,0.2);
+      transition: left 0.3s ease;
+    }
+
+    #sidebar.closed ~ #toggle-btn {
+      left: 10px;
+    }
+
+    .sidebar-item {
+      cursor: pointer;
+      padding: 6px;
+      margin-bottom: 4px;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      font-size: 13px;
+    }
+
+    .sidebar-item:hover {
+      background: #e8f0fe;
+    }
+
+    .leaflet-popup-content img {
+      width: 300px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="sidebar"></div>
+    <div id="map"></div>
+    <button id="toggle-btn"><</button>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map');
+
+    L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=zvozfVXSoJcPXkNFc6gI', {
+      tileSize: 512,
+      zoomOffset: -1,
+      crossOrigin: true
+    }).addTo(map);
+
+    const clubs = [{"id":"Golfschool Gent","address":"Keiskantstraat 5, 9031 Gent","lng":3.6431,"lat":51.04576,"imglink":"https://www.golfmedia.be/screen-images/gentse-golfschool.jpg"}];
+
+    const golfIcon = L.icon({
+      iconUrl: 'https://golf-media.github.io/maps/green-golf.png',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -30]
+    });
+
+    const sidebar = document.getElementById("sidebar");
+    const bounds = [];
+
+    clubs.forEach((club) => {
+      const popupHTML = '<strong>' + club.id + '</strong><br><p>' + club.address + '</p>' +
+                        (club.imglink ? '<img src="' + club.imglink + '">' : '');
+
+      const marker = L.marker([club.lat, club.lng], { icon: golfIcon }).addTo(map).bindPopup(popupHTML);
+      bounds.push([club.lat, club.lng]);
+
+      const item = document.createElement("div");
+      item.className = "sidebar-item";
+      item.textContent = club.id;
+      item.onclick = () => {
+        map.setView([club.lat, club.lng], 14);
+        marker.openPopup();
+      };
+      sidebar.appendChild(item);
+    });
+
+    if (bounds.length > 0) {
+      map.fitBounds(bounds, { padding: [30, 30] });
+    } else {
+      map.setView([50.5039, 4.4699], 8);
+    }
+
+    const toggleBtn = document.getElementById("toggle-btn");
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("closed");
+      toggleBtn.textContent = sidebar.classList.contains("closed") ? ">" : "<";
+    });
+  </script>
+</body>
+</html>
+
