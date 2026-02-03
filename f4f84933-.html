@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>78_Mediahuis_20260203</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: sans-serif;
+    }
+
+    #container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #sidebar {
+      width: 200px;
+      background: #f4f4f4;
+      border-right: 1px solid #ccc;
+      padding: 8px;
+      overflow-y: auto;
+      transition: width 0.3s ease;
+    }
+
+    #sidebar.closed {
+      width: 0;
+      padding: 0;
+      border: none;
+    }
+
+    #map {
+      flex-grow: 1;
+    }
+
+    #toggle-btn {
+      position: absolute;
+      top: 80px;
+      left: 200px;
+      z-index: 1001;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+      box-shadow: 0 0 3px rgba(0,0,0,0.2);
+      transition: left 0.3s ease;
+    }
+
+    #sidebar.closed ~ #toggle-btn {
+      left: 10px;
+    }
+
+    .sidebar-item {
+      cursor: pointer;
+      padding: 6px;
+      margin-bottom: 4px;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      font-size: 13px;
+    }
+
+    .sidebar-item:hover {
+      background: #e8f0fe;
+    }
+
+    .leaflet-popup-content img {
+      width: 300px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="sidebar"></div>
+    <div id="map"></div>
+    <button id="toggle-btn"><</button>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map');
+
+    L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=zvozfVXSoJcPXkNFc6gI', {
+      tileSize: 512,
+      zoomOffset: -1,
+      crossOrigin: true
+    }).addTo(map);
+
+    const clubs = [{"id":"Royal Waterloo Golf Club","address":"Vieux Chemin de Wavre 50, 1380 Lasne","lng":4.44768,"lat":50.6923,"imglink":"https://www.golfmedia.be/screen-images/waterloo.jpg"},{"id":"Golf du Bercuit","address":"Les Gottes 3, 1390 Grez-Doiceau","lng":4.67489677017854,"lat":50.7185636825219,"imglink":"https://www.golfmedia.be/screen-images/bercuit.jpg"},{"id":"Golf de Rigenee","address":"Rue du Chatelet 62, 1495 Villers-la-Ville","lng":4.52784,"lat":50.56659,"imglink":"https://www.golfmedia.be/screen-images/rigenee.jpg"},{"id":"Golf de La Bruyere","address":"Rue Jumeree 1, 1495 Villers-la-Ville","lng":4.49857,"lat":50.54393,"imglink":"https://www.golfmedia.be/screen-images/la-bruyere.jpg"},{"id":"Royal Golf Club du Hainaut","address":"Rue de la Verrerie 2, 7050 Jurbise","lng":3.92713,"lat":50.50649,"imglink":"https://www.golfmedia.be/screen-images/royal-hainaut.jpg"},{"id":"Mont Garni Golf Club","address":"Rue de l&apos;Orbette 1, 7331 Saint-Ghislain","lng":3.82034,"lat":50.50451,"imglink":"https://www.golfmedia.be/screen-images/mont-garni.jpg"},{"id":"Five Nations Golf Club","address":"Ferme du, Grand Scley, 5372","lng":5.34969,"lat":50.34635,"imglink":"https://www.golfmedia.be/screen-images/five-nations.jpg"},{"id":"Golf de Durbuy","address":"Route d&apos;Oppagne 34, 6940 Durbuy","lng":5.50069,"lat":50.33964,"imglink":"https://www.golfmedia.be/screen-images/durbuy.jpg"},{"id":"Royal Golf Club Sart‑Tilman","address":"Route du Condroz 541, 4031 Liege","lng":5.55467,"lat":50.56967,"imglink":"https://www.golfmedia.be/screen-images/sart-tilman.jpg"},{"id":"Golf de Gomze","address":"Rue sur Counachamps, 4140 Sprimont","lng":5.68766,"lat":50.54203,"imglink":"https://www.golfmedia.be/screen-images/gomze.jpg"},{"id":"Royal Golf Club des Fagnes","address":"Chemin du Golf 1, 4900 Spa","lng":5.8784,"lat":50.50975,"imglink":"https://www.golfmedia.be/screen-images/fagnes.jpg"},{"id":"Golf &amp; Country Club Henri‑Chapelle","address":"Rue Vivier 3, 4841 Welkenraedt","lng":5.93727947530942,"lat":50.6847406392557,"imglink":"https://www.golfmedia.be/screen-images/henri-chapelle.jpg"},{"id":"Pro1Golf Louvain La Neuve","address":"Dreve du Golf 1, 1348 Ottignies-Louvain-la-Neuve","lng":4.6144,"lat":50.6683,"imglink":"https://www.golfmedia.be/screen-images/pro1-louvain-la-neuve.jpg"},{"id":"Golf de Falnuee","address":"Rue Emile Pirson 55, 5032 Gembloux","lng":4.6702489388358,"lat":50.5036604856205,"imglink":"https://www.golfmedia.be/screen-images/falnuee.jpg"},{"id":"Golf Mergelhof","address":"Rue de Terstraeten 254, 4851 Plombieres","lng":5.94766499018276,"lat":50.7579733428185,"imglink":""},{"id":"Golf Club des 7 Fontaines","address":"Chau. d&apos;Alsemberg 1021, 1420 Braine-l&apos;Alleud","lng":4.34402165856389,"lat":50.7192628188865,"imglink":""},{"id":"Golf de Liege‑Bernalmont","address":"Rue Bernalmont 2, 4000 Liege","lng":5.60940028354719,"lat":50.6614587099634,"imglink":""},{"id":"Golf L’Empereur Indoor","address":"Rue Emile Francois 31, 1474 Genappe","lng":4.47737,"lat":50.63367,"imglink":"https://www.golfmedia.be/screen-images/lempereur-indoor.jpg"},{"id":"Golf L’Empereur Outdoor","address":"Rue Emile Francois 31, 1474 Genappe","lng":4.47737,"lat":50.63367,"imglink":"https://www.golfmedia.be/screen-images/lempereur-outdoor.jpg"},{"id":"Bois d’Arlon Golf Club Indoor","address":"Route de Virton 356","lng":5.737423,"lat":49.652965,"imglink":"https://www.golfmedia.be/screen-images/bois-arlon-indoor.jpg"},{"id":"Bois d’Arlon Golf Club Outdoor","address":"Route de Virton 356","lng":5.74519067046228,"lat":49.6466452604944,"imglink":"https://www.golfmedia.be/screen-images/bois-arlon-outdoor.jpg"}];
+
+    const golfIcon = L.icon({
+      iconUrl: 'https://golf-media.github.io/maps/green-golf.png',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -30]
+    });
+
+    const sidebar = document.getElementById("sidebar");
+    const bounds = [];
+
+    clubs.forEach((club) => {
+      const popupHTML = '<strong>' + club.id + '</strong><br><p>' + club.address + '</p>' +
+                        (club.imglink ? '<img src="' + club.imglink + '">' : '');
+
+      const marker = L.marker([club.lat, club.lng], { icon: golfIcon }).addTo(map).bindPopup(popupHTML);
+      bounds.push([club.lat, club.lng]);
+
+      const item = document.createElement("div");
+      item.className = "sidebar-item";
+      item.textContent = club.id;
+      item.onclick = () => {
+        map.setView([club.lat, club.lng], 14);
+        marker.openPopup();
+      };
+      sidebar.appendChild(item);
+    });
+
+    if (bounds.length > 0) {
+      map.fitBounds(bounds, { padding: [30, 30] });
+    } else {
+      map.setView([50.5039, 4.4699], 8);
+    }
+
+    const toggleBtn = document.getElementById("toggle-btn");
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("closed");
+      toggleBtn.textContent = sidebar.classList.contains("closed") ? ">" : "<";
+    });
+  </script>
+</body>
+</html>
+
