@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>77_TEST_20260205</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: sans-serif;
+    }
+
+    #container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #sidebar {
+      width: 200px;
+      background: #f4f4f4;
+      border-right: 1px solid #ccc;
+      padding: 8px;
+      overflow-y: auto;
+      transition: width 0.3s ease;
+    }
+
+    #sidebar.closed {
+      width: 0;
+      padding: 0;
+      border: none;
+    }
+
+    #map {
+      flex-grow: 1;
+    }
+
+    #toggle-btn {
+      position: absolute;
+      top: 80px;
+      left: 200px;
+      z-index: 1001;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+      box-shadow: 0 0 3px rgba(0,0,0,0.2);
+      transition: left 0.3s ease;
+    }
+
+    #sidebar.closed ~ #toggle-btn {
+      left: 10px;
+    }
+
+    .sidebar-item {
+      cursor: pointer;
+      padding: 6px;
+      margin-bottom: 4px;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      font-size: 13px;
+    }
+
+    .sidebar-item:hover {
+      background: #e8f0fe;
+    }
+
+    .leaflet-popup-content img {
+      width: 300px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="sidebar"></div>
+    <div id="map"></div>
+    <button id="toggle-btn"><</button>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+      function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, (ch) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[ch]));
+    }
+
+    const map = L.map('map');
+
+    L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=zvozfVXSoJcPXkNFc6gI', {
+      tileSize: 512,
+      zoomOffset: -1,
+      crossOrigin: true
+    }).addTo(map);
+
+    const clubs = [{"id":"Brasschaat Open Golf & Country Club","address":"Miksebaan 248, 2930 Brasschaat","lng":4.51761,"lat":51.29538,"imglink":"https://www.golfmedia.be/screen-images/brasschaat.jpg"},{"id":"Cleydael Golf & Country Club","address":"Cleydaellaan 36, 2630 Aartselaar","lng":4.3635,"lat":51.13912,"imglink":"https://www.golfmedia.be/screen-images/cleydael.jpg"},{"id":"Golfclub Drie Eycken","address":"Drie Eikenstraat 510, 2650 Edegem","lng":4.41736,"lat":51.15475,"imglink":"https://www.golfmedia.be/screen-images/drie-eycken.jpg"},{"id":"Golfclub De Wijnvelden","address":"Bergstraat 74, 2861 Sint-Katelijne-Waver","lng":4.55993,"lat":51.0475,"imglink":"https://www.golfmedia.be/screen-images/de-wijnvelden.jpg"},{"id":"Steenhoven Country Club","address":"Steenovens 89, 2400 Mol","lng":5.2209,"lat":51.28781,"imglink":"https://www.golfmedia.be/screen-images/steenhoven.jpg"},{"id":"Ternesse Golf & Country Club","address":"Uilenbaan 15, 2160 Wommelgem","lng":4.50263,"lat":51.21299,"imglink":"https://www.golfmedia.be/screen-images/ternesse.jpg"},{"id":"Witbos Golf Club","address":"Witbos, 2200 Noorderwijk","lng":4.83859,"lat":51.1297,"imglink":"https://www.golfmedia.be/screen-images/witbos.jpg"},{"id":"Brabantse Golf","address":"Steenwagenstraat 11, 1820 Steenokkerzeel","lng":4.47225,"lat":50.9149,"imglink":"https://www.golfmedia.be/screen-images/brabantse.jpg"},{"id":"Royal Keerbergen Golf Club","address":"Vlieghavenlaan 50, 3140 Keerbergen","lng":4.66884,"lat":51.00298,"imglink":"https://www.golfmedia.be/screen-images/keerbergen.jpg"},{"id":"Winge Golf & Country Club","address":"Leuvensesteenweg 254, 3390 Tielt-Winge","lng":4.87142,"lat":50.90827,"imglink":"https://www.golfmedia.be/screen-images/winge.jpg"},{"id":"Steenpoel Golf Club","address":"Jan Martin van Lierdelaan 24, 1701 Dilbeek","lng":4.24777,"lat":50.84178,"imglink":"https://www.golfmedia.be/screen-images/steenpoel.jpg"},{"id":"The National Golf Brussels","address":"Du Roy de Blicquylaan 7, 1933 Zaventem","lng":4.5127,"lat":50.84143,"imglink":"https://www.golfmedia.be/screen-images/the-national.jpg"},{"id":"The National Golf Brussels (2)","address":"Du Roy de Blicquylaan 7, 1933 Zaventem","lng":4.5127,"lat":50.84143,"imglink":"https://www.golfmedia.be/screen-images/the-national.jpg"},{"id":"Millennium Golf","address":"Donckstraat 30, 3583 Beringen","lng":5.15115,"lat":51.0526,"imglink":"https://www.golfmedia.be/screen-images/millennium.jpg"},{"id":"Golfforum Lummen","address":"Golfweg 1, 3560 Lummen","lng":5.22577,"lat":50.99349,"imglink":"https://www.golfmedia.be/screen-images/golfforum-lummen.jpg"},{"id":"Golf Club Hasselt","address":"Vissenbroekstraat 15, 3500 Hasselt","lng":5.37277,"lat":50.93777,"imglink":"https://www.golfmedia.be/screen-images/hasselt.jpg"},{"id":"Golf Ter Hille Koksijde","address":"Hof ter Hillestraat 2, 8670 Koksijde","lng":2.69702,"lat":51.11517,"imglink":"https://www.golfmedia.be/screen-images/koksijde.jpg"},{"id":"Waregem Golf Club","address":"Bergstraat 41, 8790 Waregem","lng":3.46731,"lat":50.88313,"imglink":"https://www.golfmedia.be/screen-images/waregem.jpg"},{"id":"Golfschool Gent","address":"Keiskantstraat 5, 9031 Gent","lng":3.6431,"lat":51.04576,"imglink":"https://www.golfmedia.be/screen-images/gentse-golfschool.jpg"},{"id":"Royal Waterloo Golf Club","address":"Vieux Chemin de Wavre 50, 1380 Lasne","lng":4.44768,"lat":50.6923,"imglink":"https://www.golfmedia.be/screen-images/waterloo.jpg"},{"id":"Golf du Bercuit","address":"Les Gottes 3, 1390 Grez-Doiceau","lng":4.67489677017854,"lat":50.7185636825219,"imglink":"https://www.golfmedia.be/screen-images/bercuit.jpg"},{"id":"Golf de Rigenee","address":"Rue du Chatelet 62, 1495 Villers-la-Ville","lng":4.52784,"lat":50.56659,"imglink":"https://www.golfmedia.be/screen-images/rigenee.jpg"},{"id":"Golf de La Bruyere","address":"Rue Jumeree 1, 1495 Villers-la-Ville","lng":4.49857,"lat":50.54393,"imglink":"https://www.golfmedia.be/screen-images/la-bruyere.jpg"},{"id":"Royal Golf Club du Hainaut","address":"Rue de la Verrerie 2, 7050 Jurbise","lng":3.92713,"lat":50.50649,"imglink":"https://www.golfmedia.be/screen-images/royal-hainaut.jpg"},{"id":"Mont Garni Golf Club","address":"Rue de l'Orbette 1, 7331 Saint-Ghislain","lng":3.82034,"lat":50.50451,"imglink":"https://www.golfmedia.be/screen-images/mont-garni.jpg"},{"id":"Five Nations Golf Club","address":"Ferme du, Grand Scley, 5372","lng":5.34969,"lat":50.34635,"imglink":"https://www.golfmedia.be/screen-images/five-nations.jpg"},{"id":"Golf de Durbuy","address":"Route d'Oppagne 34, 6940 Durbuy","lng":5.50069,"lat":50.33964,"imglink":"https://www.golfmedia.be/screen-images/durbuy.jpg"},{"id":"Royal Golf Club Sart‑Tilman","address":"Route du Condroz 541, 4031 Liege","lng":5.55467,"lat":50.56967,"imglink":"https://www.golfmedia.be/screen-images/sart-tilman.jpg"},{"id":"Golf de Gomze","address":"Rue sur Counachamps, 4140 Sprimont","lng":5.68766,"lat":50.54203,"imglink":"https://www.golfmedia.be/screen-images/gomze.jpg"},{"id":"Royal Golf Club des Fagnes","address":"Chemin du Golf 1, 4900 Spa","lng":5.8784,"lat":50.50975,"imglink":"https://www.golfmedia.be/screen-images/fagnes.jpg"},{"id":"Golf & Country Club Henri‑Chapelle","address":"Rue Vivier 3, 4841 Welkenraedt","lng":5.93727947530942,"lat":50.6847406392557,"imglink":"https://www.golfmedia.be/screen-images/henri-chapelle.jpg"},{"id":"Golfclub De Kluizen","address":"Zandberg 7, 9300 Aalst","lng":4.08345,"lat":50.935751,"imglink":"https://www.golfmedia.be/screen-images/de-kluizen-aalst.jpg"},{"id":"Pro1Golf Louvain La Neuve","address":"Dreve du Golf 1, 1348 Ottignies-Louvain-la-Neuve","lng":4.6144,"lat":50.6683,"imglink":"https://www.golfmedia.be/screen-images/pro1-louvain-la-neuve.jpg"},{"id":"Tervuren Golf Club","address":"Hertswegenstraat 59, 3080 Tervuren","lng":4.53627058749565,"lat":50.822034082257,"imglink":"https://www.golfmedia.be/screen-images/park-tervuren.jpg"},{"id":"Golf de Falnuee","address":"Rue Emile Pirson 55, 5032 Gembloux","lng":4.6702489388358,"lat":50.5036604856205,"imglink":"https://www.golfmedia.be/screen-images/falnuee.jpg"},{"id":"Golfbaan Stippelberg","address":"Hooizak 7, 5761 RZ Bakel","lng":5.75920931264167,"lat":51.513630270956,"imglink":""},{"id":"Golfbaan Stippelberg (2)","address":"Hooizak 7, 5761 RZ Bakel","lng":5.75920931264167,"lat":51.513630270956,"imglink":""},{"id":"Golfresidentie Dronten","address":"Golfresidentie 129, 8251 NW Dronten","lng":5.71764649357951,"lat":52.5027923732344,"imglink":""},{"id":"Golfbaan De Hoge Dijk","address":"Abcouderstraatweg 46, 1105 AA Amsterdam","lng":4.96016036850777,"lat":52.2865075386723,"imglink":""},{"id":"Golfpark De Turfvaert","address":"Zwart Moerken 12, 4891 TK Rijsbergen","lng":4.69726548222045,"lat":51.5316616704722,"imglink":""},{"id":"Golf Mergelhof","address":"Rue de Terstraeten 254, 4851 Plombieres","lng":5.94766499018276,"lat":50.7579733428185,"imglink":""},{"id":"Golf Club des 7 Fontaines","address":"Chau. d'Alsemberg 1021, 1420 Braine-l'Alleud","lng":4.34402165856389,"lat":50.7192628188865,"imglink":""},{"id":"Golf de Liege‑Bernalmont","address":"Rue Bernalmont 2, 4000 Liege","lng":5.60940028354719,"lat":50.6614587099634,"imglink":""},{"id":"Golf Resort Brunssummerheide","address":"Rimburgerweg 50, 6445 PA Brunssum","lng":6.00935271684874,"lat":50.9350817442086,"imglink":""},{"id":"Golfclub Krokkebaas","address":"Kasteelstraat 161, 9255 Buggenhout","lng":4.21033021487264,"lat":51.001761242631,"imglink":""},{"id":"Executive Club Private Golf Zwijnaarde","address":"Joachim Schayckstraat 6, 9052 Gent","lng":3.7204301948103,"lat":51.000237708815,"imglink":""},{"id":"Golfbaan Westwoud","address":"Zittend 19, 1617 KS Westwoud, Nederland","lng":5.14729,"lat":52.66654,"imglink":""},{"id":"Golfbaan Dirkshorn","address":"Groenvelderweg 3, 1746 EE Dirkshorn, Nederland","lng":4.78685,"lat":52.75607,"imglink":""},{"id":"The Links Valley","address":"Jonkheer Doctor C.J. Sandbergweg 117, 3852 PT Ermelo, Nederland","lng":5.6899,"lat":52.30177,"imglink":""},{"id":"Golfclub Kagerzoom","address":"Veerpolder 20, 2361 KV Warmond, Nederland","lng":4.50222,"lat":52.18716,"imglink":""},{"id":"De Oosterhoutse","address":"Dukaatstraat 21, 4903 RN Oosterhout, Nederland","lng":4.8693,"lat":51.62102,"imglink":""},{"id":"Golf Midden-Brabant","address":"Dunsedijk 1, 5085 ND Esbeek, Nederland","lng":5.14794,"lat":51.44326,"imglink":""},{"id":"De Peelse Golf","address":"De Peelse Golf, Evertsoord, Nederland","lng":5.96374,"lat":51.38286,"imglink":""},{"id":"Golfclub Princenbosch","address":"Bavelseweg 153, 5124 PX Molenschot, Nederland","lng":4.87356,"lat":51.54806,"imglink":""},{"id":"Golf Waterland","address":"Buikslotermeerdijk 141, 1027 AC Amsterdam, Nederland","lng":4.94225,"lat":52.4094,"imglink":""},{"id":"Royal Zoute Golf Club","address":"Sparrendreef 1A, 8300 Knokke-Heist","lng":3.3052324840745,"lat":51.3441241751327,"imglink":"https://www.golfmedia.be/screen-images/royal-zoute.jpg"},{"id":"Knokke – Indoor Golf","address":"Sparrendreef 1A, 8300 Knokke-Heist","lng":3.30532641612729,"lat":51.3441193999112,"imglink":"https://www.golfmedia.be/screen-images/hannon-knokke.jpg"},{"id":"Golf L’Empereur Indoor","address":"Rue Emile Francois 31, 1474 Genappe","lng":4.47737,"lat":50.63367,"imglink":"https://www.golfmedia.be/screen-images/lempereur-indoor.jpg"},{"id":"Golf L’Empereur Outdoor","address":"Rue Emile Francois 31, 1474 Genappe","lng":4.47737,"lat":50.63367,"imglink":"https://www.golfmedia.be/screen-images/lempereur-outdoor.jpg"},{"id":"Bois d’Arlon Golf Club Indoor","address":"Route de Virton 356","lng":5.737423,"lat":49.652965,"imglink":"https://www.golfmedia.be/screen-images/bois-arlon-indoor.jpg"},{"id":"Bois d’Arlon Golf Club Outdoor","address":"Route de Virton 356","lng":5.74519067046228,"lat":49.6466452604944,"imglink":"https://www.golfmedia.be/screen-images/bois-arlon-outdoor.jpg"},{"id":"Golfclub De Dorpswaard","address":"Piekenwaardweg 3, 5331 PD Kerkdriel","lng":5.33005596708552,"lat":51.7801103072442,"imglink":""},{"id":"Golfpark Wilnis","address":"Bovendijk 16A, 3648 NM Wilnis, Nederland","lng":4.88333446107379,"lat":52.1806410079824,"imglink":""},{"id":"Golfbaan De Kroonprins","address":"Merwedekade 8, 4131 NZ Vianen, Nederland","lng":5.08114108361761,"lat":51.9717021576889,"imglink":""}];
+
+    const golfIcon = L.icon({
+      iconUrl: 'https://golf-media.github.io/maps/green-golf.png',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -30]
+    });
+
+    const sidebar = document.getElementById("sidebar");
+    const bounds = [];
+
+    clubs.forEach((club) => {
+      const safeId = escapeHtml(club.id);
+      const safeAddr = escapeHtml(club.address);
+
+      const popupHTML = '<strong>' + safeId + '</strong><br><p>' + safeAddr + '</p>' +
+                        (club.imglink ? '<img src="' + club.imglink + '">' : '');
+
+      const marker = L.marker([club.lat, club.lng], { icon: golfIcon }).addTo(map).bindPopup(popupHTML);
+      bounds.push([club.lat, club.lng]);
+
+      const item = document.createElement("div");
+      item.className = "sidebar-item";
+      item.textContent = club.id;
+      item.onclick = () => {
+        map.setView([club.lat, club.lng], 14);
+        marker.openPopup();
+      };
+      sidebar.appendChild(item);
+    });
+
+    if (bounds.length > 0) {
+      map.fitBounds(bounds, { padding: [30, 30] });
+    } else {
+      map.setView([50.5039, 4.4699], 8);
+    }
+
+    const toggleBtn = document.getElementById("toggle-btn");
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("closed");
+      toggleBtn.textContent = sidebar.classList.contains("closed") ? ">" : "<";
+    });
+  </script>
+</body>
+</html>
+
